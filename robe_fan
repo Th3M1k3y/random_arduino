@@ -1,0 +1,57 @@
+//#define DEBUG
+
+/***********************************************************************************************************
+  Variables used for setting fan pins
+***********************************************************************************************************/
+#define fanPinPWM               3      // Pin connected to the fan PWM input
+
+/***********************************************************************************************************
+  Variables used for tuning pwm duty cycle
+***********************************************************************************************************/
+#define tempMin                 30      // Temperature where PWM will be equal to pwmMin
+#define tempMax                 60      // Temperature where PWM will be equal to pwmMax
+#define pwmMin                  5       // Minimum PWM duty cycle (min 0)
+#define pwmMax                  255     // Maximum PWM duty cycle (max 255)
+#define pwmMultiplier           100     // Multiplying values to increase resolution on the map function
+
+
+float avgTEMP = 0.0;
+
+void setup()
+{
+  pinMode(LED_BUILTIN, OUTPUT);
+  analogReference(EXTERNAL);
+
+#ifdef DEBUG
+  Serial.begin(9600);
+#endif
+
+  avgTEMP = readTemp();
+}
+
+void loop()
+{
+  digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+  
+  avgTEMP = (avgTEMP * 0.95) + (readTemp() * 0.05);
+
+#ifdef DEBUG
+  Serial.print(avgTEMP); Serial.println(" degrees C");
+#endif
+
+  int fanPWM = map(avgTEMP * pwmMultiplier, tempMin * pwmMultiplier, tempMax * pwmMultiplier, pwmMin * pwmMultiplier, pwmMax * pwmMultiplier) / pwmMultiplier; // Calculate PWM duty cycle with multiplier for better resolution
+  fanPWM = constrain(fanPWM, pwmMin, pwmMax); // Make sure PWM stays within the set limits
+
+  analogWrite(fanPinPWM, fanPWM); // Set the pin to the calculated duty cycle
+
+#ifdef DEBUG
+  Serial.println(fanPWM);
+#endif
+
+  delay(250);
+}
+
+float readTemp()
+{
+  return (((analogRead(A0) * 3.3) / 1024.0) - 0.5) * 100;
+}
