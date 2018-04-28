@@ -1,0 +1,58 @@
+uint8_t dataPin  = 11;    // Yellow wire on Adafruit Pixels
+uint8_t clockPin = 12;    // Green wire on Adafruit Pixels
+
+int leds = 25;
+int dmxStartChan = 56;
+
+#include <DMXSerial.h>
+#include "Adafruit_WS2801.h"
+Adafruit_WS2801 strip = Adafruit_WS2801(leds, dataPin, clockPin);
+
+int dmxChannels = 0;
+int ledIndex = 0;
+int colIndex = 0;
+int col[3];
+
+void setup()
+{
+  DMXSerial.init(DMXReceiver);
+  dmxChannels = leds * 3;
+  strip.begin();
+  strip.show();
+  pinMode(LED_BUILTIN, OUTPUT);
+}
+
+void loop()
+{
+  if (DMXSerial.dataUpdated())
+  {
+    DMXSerial.resetUpdated();
+    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+    colIndex = 0;
+    ledIndex = 0;
+    for (int i = dmxStartChan; i <= (dmxChannels+dmxStartChan); i++)
+    {
+      int dmxValue = DMXSerial.read(i);
+      col[colIndex] = dmxValue;
+      strip.setPixelColor(ledIndex, Color(col[0], col[1], col[2]));
+      colIndex++;
+      if (colIndex >= 3)
+      {
+        colIndex = 0;
+        ledIndex++;
+      }
+    }
+  }
+  strip.show();
+}
+
+uint32_t Color(byte r, byte g, byte b)
+{
+  uint32_t c;
+  c = r;
+  c <<= 8;
+  c |= g;
+  c <<= 8;
+  c |= b;
+  return c;
+}
