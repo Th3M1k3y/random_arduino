@@ -17,6 +17,9 @@ void setup()
   dmxChannels = leds * 3;
   strip.begin();
   pinMode(LED_BUILTIN, OUTPUT);
+  
+  pinMode(2, OUTPUT);
+  digitalWrite(2, HIGH); // Enable DMX
 
   allLED(Color(255, 255, 255));
   delay(100);
@@ -34,7 +37,7 @@ void loop()
     for (int i = 0; i < leds; i++)
     {
       int chan = (3 * i) + dmxStartChan;
-      strip.setPixelColor(i, Color(DMXSerial.read(chan), DMXSerial.read(chan +1 ), DMXSerial.read(chan + 2);
+      strip.setPixelColor(i, Color(DMXSerial.read(chan), DMXSerial.read(chan + 1), DMXSerial.read(chan + 2)));
     }
     strip.show();
   }
