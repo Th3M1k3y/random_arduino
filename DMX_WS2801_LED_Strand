@@ -9,17 +9,18 @@ int dmxStartChan = 56;
 Adafruit_WS2801 strip = Adafruit_WS2801(leds, dataPin, clockPin);
 
 int dmxChannels = 0;
-int ledIndex = 0;
-int colIndex = 0;
-int col[3];
+unsigned long lastUpdate = 0;
 
 void setup()
 {
   DMXSerial.init(DMXReceiver);
   dmxChannels = leds * 3;
   strip.begin();
-  strip.show();
   pinMode(LED_BUILTIN, OUTPUT);
+
+  allLED(Color(255, 255, 255));
+  delay(100);
+  allLED(Color(0, 0, 0));
 }
 
 void loop()
@@ -27,23 +28,22 @@ void loop()
   if (DMXSerial.dataUpdated())
   {
     DMXSerial.resetUpdated();
+    lastUpdate = millis();
     digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-    colIndex = 0;
-    ledIndex = 0;
-    for (int i = dmxStartChan; i <= (dmxChannels+dmxStartChan); i++)
+    
+    for (int i = 0; i < leds; i++)
     {
-      int dmxValue = DMXSerial.read(i);
-      col[colIndex] = dmxValue;
-      strip.setPixelColor(ledIndex, Color(col[0], col[1], col[2]));
-      colIndex++;
-      if (colIndex >= 3)
-      {
-        colIndex = 0;
-        ledIndex++;
-      }
+      int chan = (3 * i) + dmxStartChan;
+      strip.setPixelColor(i, Color(DMXSerial.read(chan), DMXSerial.read(chan +1 ), DMXSerial.read(chan + 2);
     }
+    strip.show();
   }
-  strip.show();
+
+  if (millis() - lastUpdate >= 5000)
+  {
+    allLED(Color(0, 0, 0));
+    lastUpdate = millis();
+  }
 }
 
 uint32_t Color(byte r, byte g, byte b)
@@ -55,4 +55,14 @@ uint32_t Color(byte r, byte g, byte b)
   c <<= 8;
   c |= b;
   return c;
+}
+
+
+void allLED(uint32_t c)
+{
+  for (int i = 0; i < leds; i++)
+  {
+    strip.setPixelColor(i, c);
+  }
+  strip.show();
 }
