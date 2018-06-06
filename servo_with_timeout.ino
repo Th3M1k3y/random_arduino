@@ -35,11 +35,17 @@ void loop()
 {
   if (millis() - feedLast >= 86400000UL) // 86400000 = 1 day in milliseconds
   {
-    feedLast = millis(); // Store when this function is being run    
+    feedLast = millis(); // Store when this function is being run
     feederPosition++; // Increase the position we want to move to
+
+    if (feederPosition >= sizeof(angles))
+    {
+      feederPosition = 0;
+    }
+    
     setServo(angles[feederPosition]); // Command servo to move
   }
-  
+
   handleServo(); // Continuously monitor if we need to detach the servo again
 }
 
